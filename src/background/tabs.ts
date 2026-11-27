@@ -12,15 +12,14 @@ const getAllInWindow = (windowId: number) => chrome.tabs.query({ windowId })
 const getFocusedWindow = () => chrome.windows.getLastFocused({ windowTypes: ['normal'] })
 
 /** Opens (or focuses) the list page, one per window. */
-export const openTabLists = async () => {
+export const openTabLists = async (targetWindowId?: number) => {
   const { appTabIds = {} } = await chrome.storage.session.get('appTabIds')
-  const win = await getFocusedWindow()
-  const windowId = String(win.id)
-  const existingId = appTabIds[windowId]
+  const windowId = targetWindowId ?? (await getFocusedWindow()).id!
+  const existingId = appTabIds[String(windowId)]
   if (existingId != null) {
     try {
       const tab = await chrome.tabs.get(existingId)
-      if (tab.windowId === win.id && tab.url?.startsWith(APP_URL)) {
+      if (tab.windowId === windowId && tab.url?.startsWith(APP_URL)) {
         await chrome.tabs.update(tab.id!, { active: true })
         return
       }
@@ -28,7 +27,7 @@ export const openTabLists = async () => {
       // tab was closed; fall through and create a new one
     }
   }
-  const created = await chrome.tabs.create({ url: APP_URL, windowId: win.id })
+  const created = await chrome.tabs.create({ url: APP_URL, windowId })
   await chrome.storage.session.set({ appTabIds: { ...appTabIds, [windowId]: created.id } })
 }
 
@@ -39,12 +38,12 @@ const getAllTabsInCurrentWindow = async () => {
   return getAllInWindow(win.id!)
 }
 
-export const groupTabsInCurrentWindow = async () => {
-  const tabs = await getAllTabsInCurrentWindow()
+const groupTabsForStore = async (target?: chrome.tabs.Tab) => {
+  const tabs = target ? await getAllInWindow(target.windowId) : await getAllTabsInCurrentWindow()
   const result = { left: [] as chrome.tabs.Tab[], right: [] as chrome.tabs.Tab[], inter: [] as chrome.tabs.Tab[], all: tabs }
   let currentIsRight = false
   for (const tab of tabs) {
-    if (tab.highlighted) {
+    if (target && !target.highlighted ? tab.id === target.id : tab.highlighted) {
       currentIsRight = true
       result.inter.push(tab)
     } else if (currentIsRight) result.right.push(tab)
@@ -104,66 +103,69 @@ export const storeTabs = async (tabs: chrome.tabs.Tab[], listId?: string) => {
  * Applies the openListPage option before tabs close. With 'never' and a
  * store-everything operation, a fresh new-tab page keeps the window alive.
  */
-const maybeOpenListPage = async (storingAll: boolean) => {
+const maybeOpenListPage = async (storingAll: boolean, windowId?: number) => {
   const opts = await getOptions()
   switch (opts.openListPage) {
     case 'always':
-      return openTabLists()
+      return openTabLists(windowId)
     case 'all-stored':
-      if (storingAll) return openTabLists()
+      if (storingAll) return openTabLists(windowId)
       return
     case 'if-absent': {
-      const win = await getFocusedWindow()
-      const tabs = await getAllInWindow(win.id!)
-      if (!tabs.some(t => t.url?.startsWith(APP_URL))) return openTabLists()
+      const targetWindowId = windowId ?? (await getFocusedWindow()).id!
+      const tabs = await getAllInWindow(targetWindowId)
+      if (!tabs.some(t => t.url?.startsWith(APP_URL))) return openTabLists(windowId)
       return
     }
     case 'never':
-      if (storingAll) await chrome.tabs.create({})
+      if (storingAll) await chrome.tabs.create(windowId == null ? {} : { windowId })
       return
   }
 }
 
-export const storeSelectedTabs = async (listId?: string) => {
-  const tabs = await getSelectedTabs()
-  const allTabs = await getAllTabsInCurrentWindow()
-  await maybeOpenListPage(tabs.length === allTabs.length)
+export const storeSelectedTabs = async (listId?: string, target?: chrome.tabs.Tab) => {
+  const allTabs = target ? await getAllInWindow(target.windowId) : await getAllTabsInCurrentWindow()
+  const tabs = target
+    ? allTabs.filter(tab => target.highlighted ? tab.highlighted : tab.id === target.id)
+    : await getSelectedTabs()
+  await maybeOpenListPage(tabs.length === allTabs.length, target?.windowId)
   return storeTabs(tabs, listId)
 }
 
-export const storeAllTabs = async (listId?: string) => {
-  const tabs = await getAllTabsInCurrentWindow()
-  await maybeOpenListPage(true)
+export const storeAllTabs = async (listId?: string, target?: chrome.tabs.Tab) => {
+  const tabs = target ? await getAllInWindow(target.windowId) : await getAllTabsInCurrentWindow()
+  await maybeOpenListPage(true, target?.windowId)
   return storeTabs(tabs, listId)
 }
 
-export const storeAllTabsInAllWindows = async () => {
+export const storeAllTabsInAllWindows = async (windowId?: number) => {
   const windows = await chrome.windows.getAll()
-  await maybeOpenListPage(true)
+  await maybeOpenListPage(true, windowId)
   for (const win of windows) {
     const tabs = await getAllInWindow(win.id!)
     await storeTabs(tabs)
   }
 }
 
-const storeGrouped = async (which: 'left' | 'right' | 'twoSide', listId?: string) => {
-  const groups = await groupTabsInCurrentWindow()
-  await maybeOpenListPage(false)
+const storeGrouped = async (which: 'left' | 'right' | 'twoSide', listId?: string, target?: chrome.tabs.Tab) => {
+  const groups = await groupTabsForStore(target)
+  if (target && groups[which].length === 0) return
+  await maybeOpenListPage(false, target?.windowId)
   return storeTabs(groups[which], listId)
 }
 
-export const storeLeftTabs = (listId?: string) => storeGrouped('left', listId)
-export const storeRightTabs = (listId?: string) => storeGrouped('right', listId)
-export const storeTwoSideTabs = (listId?: string) => storeGrouped('twoSide', listId)
+export const storeLeftTabs = (listId?: string, target?: chrome.tabs.Tab) => storeGrouped('left', listId, target)
+export const storeRightTabs = (listId?: string, target?: chrome.tabs.Tab) => storeGrouped('right', listId, target)
+export const storeTwoSideTabs = (listId?: string, target?: chrome.tabs.Tab) => storeGrouped('twoSide', listId, target)
 
 /** Context-menu action: stores the clicked tab's whole group (or just the tab if ungrouped). */
-export const storeTabGroup = async (tab?: chrome.tabs.Tab) => {
+export const storeTabGroup = async (tab?: chrome.tabs.Tab, windowId?: number) => {
   if (!tab) return
   const grouped =
     tab.groupId != null && tab.groupId >= 0
       ? await chrome.tabs.query({ groupId: tab.groupId, windowId: tab.windowId })
       : [tab]
-  await maybeOpenListPage(false)
+  await maybeOpenListPage(false, windowId)
   return storeTabs(grouped)
 }
 

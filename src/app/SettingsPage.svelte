@@ -41,6 +41,11 @@
       labelKey: 'settings.toolbar.pageContext.label',
       descKey: 'settings.toolbar.pageContext.desc',
     },
+    {
+      key: 'tabContext',
+      labelKey: 'settings.toolbar.tabContext.label',
+      descKey: 'settings.toolbar.tabContext.desc',
+    },
   ]
 </script>
 
@@ -173,7 +178,7 @@
           <option value="show-list">{t('settings.toolbar.browserAction.showList')}</option>
         </select>
       </div>
-      {#each menuToggles as toggle (toggle.key)}
+      {#each menuToggles.filter(toggle => toggle.key !== 'tabContext' || app.tabContextSupported) as toggle (toggle.key)}
         <label class="row">
           <div class="text">
             <div class="label">{t(toggle.labelKey)}</div>

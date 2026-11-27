@@ -235,7 +235,10 @@ export const en: Catalog = {
   'settings.toolbar.browserAction.showList': 'Opens the list page',
   'settings.toolbar.pageContext.label': 'Show in page right-click menu',
   'settings.toolbar.pageContext.desc':
-    'Adds a “Better Tab Manager” submenu when right-clicking a webpage (and on links, images, and selections). Off, the actions only appear when right-clicking the toolbar icon.',
+    'Adds a “Better Tab Manager” submenu when right-clicking a webpage (and on links, images, and selections). Off, the actions remain available by right-clicking the toolbar icon.',
+  'settings.toolbar.tabContext.label': 'Show in tab right-click menu',
+  'settings.toolbar.tabContext.desc':
+    'Adds a “Better Tab Manager” submenu when right-clicking a browser tab.',
 
   'settings.footer.madeWith': 'Made with ❤️ in NYC',
   'settings.footer.coffee': '☕ Buy me a coffee',

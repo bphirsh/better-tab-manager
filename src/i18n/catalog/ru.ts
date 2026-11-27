@@ -225,7 +225,10 @@ export const ru: Catalog = {
   'settings.toolbar.browserAction.showList': 'Открывает страницу списков',
   'settings.toolbar.pageContext.label': 'Показывать в контекстном меню страницы',
   'settings.toolbar.pageContext.desc':
-    'Добавляет подменю «Better Tab Manager» при правом клике по странице. Если выключено, действия появляются только при правом клике по значку на панели.',
+    'Добавляет подменю «Better Tab Manager» при правом клике по странице. Если выключено, действия по-прежнему доступны при правом клике по значку на панели.',
+  'settings.toolbar.tabContext.label': 'Показывать в контекстном меню вкладки',
+  'settings.toolbar.tabContext.desc':
+    'Добавляет подменю «Better Tab Manager» при правом клике по вкладке.',
 
   'settings.footer.madeWith': 'Сделано с ❤️ в NYC',
   'settings.footer.coffee': '☕ Купите мне кофе',

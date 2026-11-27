@@ -225,7 +225,10 @@ export const zhTW: Catalog = {
   'settings.toolbar.browserAction.showList': '開啟清單頁面',
   'settings.toolbar.pageContext.label': '顯示於頁面右鍵選單',
   'settings.toolbar.pageContext.desc':
-    '在網頁上按右鍵時加入「Better Tab Manager」子選單。關閉時，這些操作只會在對工具列圖示按右鍵時出現。',
+    '在網頁上按右鍵時加入「Better Tab Manager」子選單。關閉後，仍可對工具列圖示按右鍵使用這些操作。',
+  'settings.toolbar.tabContext.label': '顯示於分頁右鍵選單',
+  'settings.toolbar.tabContext.desc':
+    '對分頁按右鍵時加入「Better Tab Manager」子選單。',
 
   'settings.footer.madeWith': '在 NYC 用 ❤️ 打造',
   'settings.footer.coffee': '☕ 請我喝杯咖啡',

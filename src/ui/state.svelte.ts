@@ -7,6 +7,7 @@ export const app = $state({
   trash: [] as TrashEntry[],
   tabTrash: [] as TrashTabEntry[],
   opts: { ...DEFAULT_OPTIONS } as Options,
+  tabContextSupported: false,
   syncConfig: { ...SYNC_CONFIG_DEFAULTS } as SyncConfig,
   syncState: { lastPushAt: null, lastPullAt: null, error: null } as SyncState,
   loaded: false,
@@ -14,17 +15,21 @@ export const app = $state({
 
 /** Loads state from storage and keeps it live via onChanged. */
 export const initState = async () => {
-  const [lists, trash, tabTrash, opts, syncConfig, syncState] = await Promise.all([
+  const [lists, trash, tabTrash, opts, syncConfig, syncState, { tabContextSupported = false }] = await Promise.all([
     getLists(),
     getTrash(),
     getTabTrash(),
     getOptions(),
     getSyncConfig(),
     getSyncState(),
+    chrome.storage.session.get('tabContextSupported'),
   ])
-  Object.assign(app, { lists, trash, tabTrash, opts, syncConfig, syncState, loaded: true })
+  Object.assign(app, { lists, trash, tabTrash, opts, syncConfig, syncState, tabContextSupported, loaded: true })
 
   chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'session' && changes.tabContextSupported) {
+      app.tabContextSupported = changes.tabContextSupported.newValue ?? false
+    }
     if (area !== 'local') return
     if (changes[STORAGE_KEYS.LISTS_KEY]) app.lists = changes[STORAGE_KEYS.LISTS_KEY].newValue ?? []
     if (changes[STORAGE_KEYS.TRASH_KEY]) app.trash = changes[STORAGE_KEYS.TRASH_KEY].newValue ?? []

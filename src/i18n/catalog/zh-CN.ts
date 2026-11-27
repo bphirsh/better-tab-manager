@@ -225,7 +225,10 @@ export const zhCN: Catalog = {
   'settings.toolbar.browserAction.showList': '打开列表页面',
   'settings.toolbar.pageContext.label': '在页面右键菜单中显示',
   'settings.toolbar.pageContext.desc':
-    '在网页上右键时添加一个“Better Tab Manager”子菜单。关闭时，这些操作仅在右键点击工具栏图标时出现。',
+    '在网页上右键时添加一个“Better Tab Manager”子菜单。关闭后，仍可通过右键点击工具栏图标使用这些操作。',
+  'settings.toolbar.tabContext.label': '在标签页右键菜单中显示',
+  'settings.toolbar.tabContext.desc':
+    '右键点击标签页时添加一个“Better Tab Manager”子菜单。',
 
   'settings.footer.madeWith': '用 ❤️ 在 NYC 制作',
   'settings.footer.coffee': '☕ 请我喝杯咖啡',

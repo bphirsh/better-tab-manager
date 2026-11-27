@@ -27,6 +27,8 @@ export interface Options {
   pinGroupList: boolean
   /** Show context menu items on pages (and on links, images, and selections). */
   pageContext: boolean
+  /** Show context menu items on browser tabs. */
+  tabContext: boolean
   /** How long deleted lists stay recoverable in History (locally). */
   trashRetention: 'immediately' | 'day' | 'week' | 'month'
   /** Skip about:/chrome: etc. URLs when storing (file: pages are kept — they can be reopened). */
@@ -58,6 +60,7 @@ export const DEFAULT_OPTIONS: Options = {
   ignorePinned: false,
   pinGroupList: false,
   pageContext: true,
+  tabContext: true,
   trashRetention: 'month',
   excludeIllegalURL: true,
   removeDuplicate: false,
